@@ -44,10 +44,6 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
-      - name: Configure Role to execute lambda
-        run: |
-            aws iam create-role --role-name lambda-ex \
-              --assume-role-policy-document '{"Version": "2012-10-17","Statement": [{ "Effect": "Allow", "Principal": {"Service": "lambda.amazonaws.com"}, "Action": "sts:AssumeRole"}]}'
       - name: Deploy the lambda
         run: |
             aws create-function --function-name my-function \
