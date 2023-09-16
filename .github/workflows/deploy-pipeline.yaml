@@ -64,8 +64,6 @@ jobs:
 
   finish:
     runs-on: ubuntu-latest
+    needs: publish
     steps:
-      - run: echo "Hello Cloud Gurus"
-      - run: echo $HOSTNAME
-      - run: echo "Hola mundo"
-          
+      - run: echo "We have built ${{ github.run_number }}"
