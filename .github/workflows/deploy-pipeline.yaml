@@ -60,4 +60,12 @@ jobs:
           body: New release for {{ github.sha }}. Release notes on the documentation site
           draft: false
           prerelease: false
+
+
+  finish:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Hello Cloud Gurus"
+      - run: echo $HOSTNAME
+      - run: echo "Hola mundo"
           
