@@ -69,6 +69,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     needs: upload
+    strategy:
+      matrix:
+        input: ["Hello","Hi"] 
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -80,16 +83,22 @@ jobs:
         run: echo "${{ secrets.AWS_ACCOUNT_ID }}"
       - name: Create test function
         run: |
-            aws lambda create-function --function-name test-function \
+            aws lambda create-function --function-name test-function-${{ matrix.input }} \
               --code S3Bucket=testjuanito2,S3Key=${{ github.sha }}.zip \
               --handler lambda_function.lambda_handler --runtime python3.8 \
               --role arn:aws:iam::259228172746:role/my-lambda-role
-      - name: Wait 30 seconds
-        run: sleep 30
+      - name: Invoke test function
+        run: |
+            aws lambda invoke --function-name test-function-${{ matrix.input }} \
+              --payload $(echo "{\"input\": \"{{ matrix.input }}\"}" | base64) \
+              --output json out
+            if grep -q "Error"out; then
+              exit1
+            fi
       - name: Destroy test function
         ##This is to say that even if last part failed it should continue
         if: ${{ always() }}
-        run: aws lambda delete-function --function-name test-function
+        run: aws lambda delete-function --function-name test-function-${{ matrix.input }}
         
   deploy:
     runs-on: ubuntu-latest
