@@ -23,10 +23,7 @@ jobs:
         run:  |
              flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
              flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-
-
-
-
+             
   build:
     runs-on: ubuntu-latest
     needs: lint
@@ -68,10 +65,33 @@ jobs:
           aws-region: us-east-1
       - name: Upload to s3
         run: aws s3 cp ${{ github.sha }}.zip s3://testjuanito2/${{ github.sha }}.zip
-             
-  deploy:
+
+  test:
     runs-on: ubuntu-latest
     needs: upload
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name: Create test function
+        run: |
+            aws lambda create-function --funcion-name ≈ \
+              --code S3Bucket=testjuanito2, S3Key=${{ github.sha }}.zip
+              --handler lambda_function.lambda_handler --runtime python3.8  \
+              --role arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/my-lambda-role
+      - name: Wait 30 seconds
+        run: sleep 30
+      - name: Destroy test function
+        ##This is to say that even if last part failed it should continue
+        if: ${{ always() }}
+        run: aws lambda delete-function --function-name test-function
+        
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
